@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, jsonify
-from flask.ext.mongoengine import MongoEngine
+from flask_mongoengine import MongoEngine
 from flask_jwt_extended import JWTManager
 
 
@@ -12,7 +12,13 @@ jwt = JWTManager(application)
 
 application.config["SECRET_KEY"] = "KeepThisS3cr3t"
 
-application.config["MONGODB_SETTINGS"] = 'mongodb://' + os.environ['MONGODB_USERNAME'] + ':' + os.environ['MONGODB_PASSWORD'] + '@' + os.environ['MONGODB_HOSTNAME'] + ':27017/' + os.environ['MONGODB_DATABASE']
+application.config['MONGODB_SETTINGS'] = {
+    'db': os.environ['MONGODB_DATABASE'],
+    'username': os.environ['MONGODB_USERNAME'],
+    'password': os.environ['MONGODB_PASSWORD'],
+    'host': os.environ['MONGODB_HOSTNAME'],
+    'port': 27017,
+}
 
 db = MongoEngine(application)
 
@@ -21,6 +27,7 @@ def register_blueprints(app):
     # Prevents circular imports
     from app.auth.views import auth
     app.register_blueprint(auth)
+
 
 register_blueprints(application)
 

@@ -1,0 +1,5 @@
+Flask
+Flask-PyMongo
+requests
+flask-jwt-extended
+flask-mongoengine

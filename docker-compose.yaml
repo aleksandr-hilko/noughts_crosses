@@ -17,7 +17,7 @@ services:
       MONGODB_PASSWORD: super_secret_password
       MONGODB_HOSTNAME: mongodb
     volumes:
-      - flaskappdata:/var/www
+      - .:/var/www
     depends_on:
       - mongodb
     networks:
@@ -70,8 +70,6 @@ networks:
 
 volumes:
   mongodbdata:
-    driver: local
-  flaskappdata:
     driver: local
   nginxdata:
     driver: local

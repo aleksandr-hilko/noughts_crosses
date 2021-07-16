@@ -53,6 +53,7 @@ pyjwt==2.1.0
     # via flask-jwt-extended
 pymongo==3.12.0
     # via
+    #   -r requirements.in
     #   flask-pymongo
     #   mongoengine
 requests==2.26.0

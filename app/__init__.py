@@ -3,7 +3,6 @@ import os
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from flask_pymongo import PyMongo
-from pymongo import MongoClient
 
 
 
@@ -22,7 +21,9 @@ db = mongodb_client.db
 def register_blueprints(app):
     # Prevents circular imports
     from app.auth.views import auth
+    from app.game.views import game
     app.register_blueprint(auth)
+    app.register_blueprint(game)
 
 
 register_blueprints(application)

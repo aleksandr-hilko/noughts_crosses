@@ -3,3 +3,5 @@ Flask-PyMongo
 requests
 flask-jwt-extended
 flask-mongoengine
+marshmallow
+flask_pymongo

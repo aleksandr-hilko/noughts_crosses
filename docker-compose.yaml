@@ -30,11 +30,13 @@ services:
     restart: unless-stopped
     command: mongod --auth
     environment:
-      MONGO_INITDB_ROOT_USERNAME: mongodbuser
+      MONGO_INITDB_ROOT_USERNAME: flasksuperuser
       MONGO_INITDB_ROOT_PASSWORD: super_secret_root_password
       MONGO_INITDB_DATABASE: gamedb
       MONGODB_DATA_DIR: /data/db
       MONDODB_LOG_DIR: /dev/null
+    ports:
+      - 27017:27017
     volumes:
       - mongodbdata:/data/db
     networks:

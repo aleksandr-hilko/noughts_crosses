@@ -17,7 +17,7 @@ USER www
 
 EXPOSE 5000
 
-# CMD [ "gunicorn", "-w", "4", "--bind", "0.0.0.0:5000", "app.wsgi:application" ]
+CMD [ "gunicorn", "-w", "4", "--reload", "--bind", "0.0.0.0:5000", "app.wsgi:application" ]
 
-CMD [ "flask", "run" ]
+# CMD [ "flask", "run" ]
 

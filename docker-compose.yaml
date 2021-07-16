@@ -18,6 +18,8 @@ services:
       MONGODB_HOSTNAME: mongodb
     volumes:
       - .:/var/www
+    ports:
+      - 5000:5000
     depends_on:
       - mongodb
     networks:
@@ -28,10 +30,7 @@ services:
     image: mongo:4.0.8
     container_name: mongodb
     restart: unless-stopped
-    command: mongod --auth
     environment:
-      MONGO_INITDB_ROOT_USERNAME: flasksuperuser
-      MONGO_INITDB_ROOT_PASSWORD: super_secret_root_password
       MONGO_INITDB_DATABASE: gamedb
       MONGODB_DATA_DIR: /data/db
       MONDODB_LOG_DIR: /dev/null

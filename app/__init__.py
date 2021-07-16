@@ -1,7 +1,6 @@
 import os
 
 from flask import Flask, jsonify
-from flask_mongoengine import MongoEngine
 from flask_jwt_extended import JWTManager
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
@@ -14,8 +13,7 @@ application.config["JWT_SECRET_KEY"] = "KeepThisS3cr3tereterterter5yuy67u"
 jwt = JWTManager(application)
 
 application.config["SECRET_KEY"] = "KeepThisS3cr3t"
-application.config["MONGO_URI"] = f'mongodb://{os.environ["MONGODB_USERNAME"]}:{os.environ["MONGODB_PASSWORD"]}@{os.environ["MONGODB_HOSTNAME"]}:27017/{os.environ["MONGODB_DATABASE"]}'
-application.config['MONGO_AUTH_SOURCE'] = 'admin'
+application.config["MONGO_URI"] = f'mongodb://{os.environ["MONGODB_HOSTNAME"]}:27017/{os.environ["MONGODB_DATABASE"]}'
 
 mongodb_client = PyMongo(application)
 db = mongodb_client.db

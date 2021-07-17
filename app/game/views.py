@@ -1,8 +1,10 @@
+from app.game.game import Game
 from app import db
 from flask import Blueprint, jsonify, request
 from marshmallow import ValidationError
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from app.game.serializers import GameStartSchema, GameSchema
+from app.game.serializers import GameStartSchema, GameSchema, GameMoveSchema
+from bson.objectid import ObjectId
 
 
 game = Blueprint('game', __name__, url_prefix='/games')
@@ -26,6 +28,8 @@ def start_game():
                 "user_moves": [], 
                 "computer_moves": [], 
                 "completed": False,
+                "line_len_to_win": request_data["line_len_to_win"],
+                "status": "in-progress",
             }
         )
     return jsonify(message="Game has started"), 201
@@ -41,6 +45,36 @@ def games_list():
     return jsonify(schema.dump(games))
 
 
-# @game.route('<>/move', methods=['POST'])
-# def move():
-#     post = request.get_json()
+@game.route('/<string:game_id>/move', methods=['POST'])
+@jwt_required()
+def move(game_id):
+    current_user = get_jwt_identity()
+    mongo_game = db.games.find_one_or_404({"_id": ObjectId(game_id), "user": current_user})
+    status = mongo_game["status"]
+    if not status == "in-progress":
+        return jsonify(message=f"Game has ended with status: {status}"), 400
+
+    request_data = request.get_json()
+    try:
+        GameMoveSchema().load(request_data)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    u_x, u_y = request_data["x"], request_data["y"]
+    game = Game.from_mongo(mongo_game)
+    free_cells = game.get_free_cells()
+
+    if (u_x, u_y) not in free_cells:
+        return jsonify(f"You can't move at this cell. Free board cells are: {free_cells}"), 400
+    
+    game.make_move(u_x, u_y, computer=False)
+    user_move, computer_move = (u_x, u_y), None
+
+    if game.has_won() or not game.get_free_cells():
+        pass
+    else:
+        c_x, x_y = game.calculate_move()
+        game.make_move(c_x, x_y, computer=True)
+        computer_move = (c_x, x_y)
+    data = game.data_for_mongo
+    result = db.games.find_one_and_update({"_id": game_id}, {"$set": data})
+    return jsonify(your_move=user_move, computer_move=computer_move, game_status=result["status"])

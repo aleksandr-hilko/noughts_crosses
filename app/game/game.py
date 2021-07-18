@@ -1,15 +1,77 @@
+import random
+
+
+class Player:
+    def __init__(self, moves, is_computer):
+        self._moves = set(moves)
+        self.is_computer = is_computer
+    
+    @property
+    def moves(self):
+        return self._moves
+
+    @property
+    def max_points_in_seq(self):
+        #TODO improve this method
+        moves_count = len(self._moves)
+        g_max = moves_count if moves_count <= 1 else 0
+        if len(self._moves) >= 2:
+            max_x = max(m[0] for m in self._moves)
+            min_x = min(m[0] for m in self._moves)
+            max_y = max(m[1] for m in self._moves)
+            min_y = min(m[1] for m in self._moves)
+            for m in self._moves:
+                hor_points = {(i, m[1]) for i in range(min_x, max_x + 1)}
+                vertical_points = {(m[0], i) for i in range(min_y, max_y + 1)}
+                diagonal_1_points = {(m[0] + i, m[1] + i) for i, _ in enumerate(range(m[0], max_x + 1))}.union({(m[0] - i, m[1] - i) for i, _ in enumerate(range(min_y, m[1] + 1))})
+                diagonal_2_points = {(m[0] - i, m[1] + i) for i, _ in enumerate(range(min_x, m[0] + 1))}.union({(m[0] + i, m[1] - i) for i, _ in enumerate(range(m[0], max_x + 1))})
+                iterables = (hor_points, vertical_points, diagonal_1_points, diagonal_2_points)
+                for i in iterables:
+                    l_max = 0
+                    for point in i:
+                        if point in self._moves:
+                            l_max += 1
+                        else:
+                            l_max = 0
+                        if l_max > g_max:
+                            g_max = l_max
+        return g_max
+    
+    def add_move(self, move):
+        self._moves.add(move)
+
+
 class Board:
-    pass
+    def __init__(self, size, user_moves, computer_moves):
+        self.size = size
+        self.user_player = Player(user_moves, is_computer=False)
+        self.computer_player = Player(computer_moves, is_computer=True)
+    
+    @property
+    def cells(self):
+        return {(x,y) for x in range(0,self.size) for y in range(0,self.size)}
+    
+    @property
+    def free_cells(self):
+        return self.cells - self.user_player - self.computer_player
+    
+    def get_player(self, is_computer=False):
+        return [player for player in [self.user_player, self.computer_player] if player.is_computer == is_computer][0]
+    
+    def add_move(self, move, computer=False):
+        obj = self.get_player(is_computer=computer)
+        return obj.add_move(move)
+    
+    def has_wone(self, line_len_to_win, computer=False):
+        obj = self.get_player(is_computer=computer)
+        return obj.max_points_in_seq >= line_len_to_win
 
 
 class Game:
-    def __init__(self, user, user_moves, computer_moves, line_len_to_win, status, **kwargs):
-        self.user = user
-        self.user_moves = user_moves
-        self.computer_moves = computer_moves 
+    def __init__(self, board_size, user_moves, computer_moves, line_len_to_win, status, **kwargs):
+        self.board = Board(board_size, user_moves, computer_moves)
         self.line_len_to_win = line_len_to_win
         self.status = status
-
 
     @classmethod
     def from_mongo(cls, mongo_obj):
@@ -22,15 +84,17 @@ class Game:
     def data_for_mongo(self):
         raise NotImplemented
     
-    def get_free_cells(self):
-        raise NotImplemented
+    @property
+    def free_cells(self):
+        return self.board.free_cells
     
-    def make_move(self):
-        raise NotImplemented
+    def make_move(self, move, computer=False):
+        self.board.add_move(move=move, computer=computer)
     
     def calculate_move(self):
-        raise NotImplemented
+        #TODO improve the algorithm used to calculate the best move for the computer
+        assert self.free_cells, "There are no free cells on a board."
+        return random.choice(self.free_cells)
     
-    def has_wone(self):
-        raise NotImplemented
-
+    def has_wone(self, computer=False):
+        raise self.board.has_wone(self.line_len_to_win, computer=computer)

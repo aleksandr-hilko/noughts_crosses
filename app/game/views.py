@@ -61,7 +61,7 @@ def move(game_id):
         return jsonify(err.messages), 400
     u_x, u_y = request_data["x"], request_data["y"]
     game = Game.from_mongo(mongo_game)
-    free_cells = game.get_free_cells()
+    free_cells = game.free_cells
 
     if (u_x, u_y) not in free_cells:
         return jsonify(f"You can't move at this cell. Free board cells are: {free_cells}"), 400
@@ -69,7 +69,7 @@ def move(game_id):
     game.make_move(u_x, u_y, computer=False)
     user_move, computer_move = (u_x, u_y), None
 
-    if game.has_won() or not game.get_free_cells():
+    if game.has_won(computer=False) or not game.free_cells:
         pass
     else:
         c_x, x_y = game.calculate_move()

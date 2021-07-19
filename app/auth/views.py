@@ -5,7 +5,7 @@ from flask_jwt_extended import create_access_token
 from marshmallow import ValidationError
 
 
-auth = Blueprint('auth', __name__, url_prefix='/auth')
+auth = Blueprint("auth", __name__, url_prefix="/auth")
 
 
 @auth.route("/register", methods=["POST"])
@@ -43,4 +43,3 @@ def login():
         return jsonify(message="Login Succeeded!", access_token=access_token), 201
     else:
         return jsonify(message="Bad Email or Password"), 401
-        

@@ -35,7 +35,7 @@ def start_game():
     else:
         current_user = get_jwt_identity()
         computer_first = random.choice([True, False])
-        game = db.games.insert_one(
+        _id = db.games.insert_one(
             {
                 "user": current_user,
                 "board_size": request_data["board_size"],

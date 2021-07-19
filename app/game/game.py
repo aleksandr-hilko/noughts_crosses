@@ -5,6 +5,10 @@ from app.game.constants import GameStatus
 
 
 class Player:
+    """
+    Represents user and its moves on the board.
+    """
+
     def __init__(self, moves, is_computer):
         self.moves = moves
         self.is_computer = is_computer
@@ -15,6 +19,12 @@ class Player:
 
     @property
     def max_points_in_seq(self):
+        """
+        Get the length of the longest line that user currently has.
+        This is used further as the indicatation of whether
+        user has won or not by comparing with the number needed
+        to win a game.
+        """
         # TODO improve this method
         moves_count = len(self.raw_moves)
         g_max = moves_count if moves_count <= 1 else 0
@@ -63,6 +73,10 @@ class Player:
 
 
 class Board:
+    """
+    Encapsulates methods that are used to interact with the board.
+    """
+
     def __init__(self, size, user_moves, computer_moves):
         self.size = size
         self.user_player = Player(user_moves, is_computer=False)
@@ -75,7 +89,7 @@ class Board:
     @property
     def free_cells(self):
         return self.cells - self.user_player.raw_moves - self.computer_player.raw_moves
-    
+
     @property
     def number_of_moves(self):
         return len(self.user_player.moves) + len(self.computer_player.moves)
@@ -97,6 +111,14 @@ class Board:
 
 
 class Game:
+    """
+    Main class that represents game and with which client
+    should interact.
+    Contains methods to communicate with mongo db game records (from_mongo, data_for_mongo)
+    as well as reference to Board object which is used to as a delegate object
+    to do some calculations.
+    """
+
     def __init__(
         self, board_size, user_moves, computer_moves, line_len_to_win, status, **kwargs
     ):
@@ -105,6 +127,9 @@ class Game:
 
     @classmethod
     def from_mongo(cls, mongo_obj):
+        """
+        Initializer to get instance from mondo db object.
+        """
         from app.game.serializers import GameSchema
 
         schema = GameSchema()
@@ -113,6 +138,9 @@ class Game:
 
     @property
     def data_for_mongo(self):
+        """
+        Data that should be inserted to mongo upon next game round.
+        """
         status = self.status
         data = {
             "user_moves": self.board.user_player.moves,
@@ -136,11 +164,14 @@ class Game:
     @property
     def free_cells(self):
         return self.board.free_cells
-    
+
     def make_move(self, move, computer=False):
         self.board.add_move(move=move, computer=computer)
 
     def calculate_move(self):
+        """
+        Calculate a move for computer merely by selecting among free cells on a board.
+        """
         # TODO improve the algorithm used to calculate the best move for the computer
         assert self.free_cells, "There are no free cells on a board."
         return random.choice(tuple(self.free_cells))

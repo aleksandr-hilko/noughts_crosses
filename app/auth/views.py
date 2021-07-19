@@ -22,6 +22,7 @@ def register():
     if user:
         return jsonify(message="User Already Exist"), 400
     else:
+        # TODO Improve code to not store raw passwords in the database.
         db.users.insert_one(request_data)
         return jsonify(message="User added sucessfully"), 201
 

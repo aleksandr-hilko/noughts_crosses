@@ -20,6 +20,12 @@ logger = logging.getLogger(__name__)
 @game.route("/", methods=["POST"])
 @jwt_required()
 def start_game():
+    """
+    post: Endpoint that should be called to start a game.
+    User should pass board_size and line_len_to_win, which
+    is a number of points in a line whihc is used
+    as a condition to win.
+    """
     request_data = request.get_json()
     schema = GameStartSchema()
     try:
@@ -39,7 +45,7 @@ def start_game():
                 "line_len_to_win": request_data["line_len_to_win"],
                 "status": GameStatus.IN_PROGRESS,
                 "created_at": datetime.datetime.now(),
-                "computer_first": computer_first
+                "computer_first": computer_first,
             }
         )
     return jsonify(message="Game has started", game_id=str(_id.inserted_id)), 201
@@ -48,6 +54,9 @@ def start_game():
 @game.route("/", methods=["GET"])
 @jwt_required()
 def games_list():
+    """
+    get: Get list on current games for user along with some statistics details.
+    """
     current_user = get_jwt_identity()
     schema = GameSchema(many=True)
     games = db.games.find({"user": current_user})
@@ -57,6 +66,13 @@ def games_list():
 @game.route("/<string:game_id>/move", methods=["POST"])
 @jwt_required()
 def move(game_id):
+    """
+    post: Main endpoint to play a game.
+    User should pass desired coordinates to move on here
+    on success should receive computer move alond with
+    status of a game.
+    Coordinates are validated within current board position.
+    """
     current_user = get_jwt_identity()
     mongo_game = db.games.find_one_or_404(
         {"_id": ObjectId(game_id), "user": current_user}
@@ -94,4 +110,6 @@ def move(game_id):
             break
     data = game.data_for_mongo
     db.games.find_one_and_update({"_id": ObjectId(game_id)}, {"$set": data})
-    return jsonify(your_move=u_coords, computer_move=c_coords, game_status=data["status"])
+    return jsonify(
+        your_move=u_coords, computer_move=c_coords, game_status=data["status"]
+    )

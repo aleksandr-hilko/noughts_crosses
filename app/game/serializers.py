@@ -15,8 +15,8 @@ class GameSchema(Schema):
     _id = fields.String()
     user = fields.Str()
     board_size = fields.Int()
-    user_moves = fields.List(fields.Int())
-    computer_moves = fields.List(fields.Int())
+    user_moves = fields.List(fields.Tuple((fields.Int, fields.Int)))
+    computer_moves = fields.List(fields.Tuple((fields.Int, fields.Int)))
     line_len_to_win = fields.Int()
     status = fields.Str()
 

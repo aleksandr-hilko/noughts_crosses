@@ -1,4 +1,5 @@
 import random
+from app.game.constants import GameStatus
 
 
 class Player:
@@ -53,7 +54,7 @@ class Board:
     
     @property
     def free_cells(self):
-        return self.cells - self.user_player - self.computer_player
+        return self.cells - self.user_player.moves - self.computer_player.moves
     
     def get_player(self, is_computer=False):
         return [player for player in [self.user_player, self.computer_player] if player.is_computer == is_computer][0]
@@ -62,7 +63,7 @@ class Board:
         obj = self.get_player(is_computer=computer)
         return obj.add_move(move)
     
-    def has_wone(self, line_len_to_win, computer=False):
+    def has_won(self, line_len_to_win, computer=False):
         obj = self.get_player(is_computer=computer)
         return obj.max_points_in_seq >= line_len_to_win
 
@@ -71,7 +72,6 @@ class Game:
     def __init__(self, board_size, user_moves, computer_moves, line_len_to_win, status, **kwargs):
         self.board = Board(board_size, user_moves, computer_moves)
         self.line_len_to_win = line_len_to_win
-        self.status = status
 
     @classmethod
     def from_mongo(cls, mongo_obj):
@@ -82,7 +82,23 @@ class Game:
     
     @property
     def data_for_mongo(self):
-        raise NotImplemented
+        data = {
+            "user_moves": list(self.board.user_player.moves),
+            "computer_moves": list(self.board.computer_player.moves),
+            "status": self.status,
+        }
+        return data
+        
+    
+    @property
+    def status(self):
+        if not self.free_cells:
+            return GameStatus.TIE
+        elif self.has_won(computer=False):
+            return GameStatus.USER_WIN
+        elif self.has_won(computer=True):
+            return GameStatus.COMPUTER_WIN
+        return GameStatus.IN_PROGRESS
     
     @property
     def free_cells(self):
@@ -94,7 +110,8 @@ class Game:
     def calculate_move(self):
         #TODO improve the algorithm used to calculate the best move for the computer
         assert self.free_cells, "There are no free cells on a board."
-        return random.choice(self.free_cells)
+        return random.choice(tuple(self.free_cells))
     
-    def has_wone(self, computer=False):
-        raise self.board.has_wone(self.line_len_to_win, computer=computer)
+    def has_won(self, computer=False):
+        return self.board.has_won(self.line_len_to_win, computer=computer)
+    

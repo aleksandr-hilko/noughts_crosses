@@ -5,7 +5,6 @@ from flask_jwt_extended import JWTManager
 from flask_pymongo import PyMongo
 
 
-
 application = Flask(__name__)
 application.config["JWT_SECRET_KEY"] = "KeepThisS3cr3tereterterter5yuy67u"
 

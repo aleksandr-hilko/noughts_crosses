@@ -1,4 +1,8 @@
-from marshmallow import Schema, fields, validate, validates_schema, ValidationError
+import datetime
+from venv import create
+
+from marshmallow import (Schema, ValidationError, fields, validate,
+                         validates_schema)
 
 
 class GameStartSchema(Schema):
@@ -21,6 +25,21 @@ class GameSchema(Schema):
     computer_moves = fields.List(fields.Tuple((fields.Int, fields.Int)))
     line_len_to_win = fields.Int()
     status = fields.Str()
+    created_at = fields.DateTime(missing=None, default=None)
+    completed_at = fields.DateTime(missing=None, default=None)
+    number_of_moves = fields.Method("get_number_of_moves")
+    duration = fields.Method("get_duration") 
+
+    def get_number_of_moves(self, instance):
+        return max(len(instance["user_moves"]), len(instance["computer_moves"]))
+    
+    def get_duration(self, instance):
+        created_at, completed_at = instance.get("created_at"), instance.get("completed_at")
+        if created_at and completed_at:
+            duration = completed_at - created_at
+        else:
+            duration = datetime.datetime.now() - created_at
+        return str(duration)
 
 
 class GameMoveSchema(Schema):

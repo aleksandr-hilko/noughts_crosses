@@ -1,6 +1,7 @@
-from bson.objectid import ObjectId
-
+import datetime
 import logging
+
+from bson.objectid import ObjectId
 
 from app import db
 from app.game.constants import GameStatus
@@ -35,6 +36,7 @@ def start_game():
                 "completed": False,
                 "line_len_to_win": request_data["line_len_to_win"],
                 "status": GameStatus.IN_PROGRESS,
+                "created_at": datetime.datetime.now()
             }
         )
     return jsonify(message="Game has started"), 201

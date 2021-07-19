@@ -1,4 +1,6 @@
 import random
+import datetime
+
 from app.game.constants import GameStatus
 
 
@@ -102,11 +104,14 @@ class Game:
 
     @property
     def data_for_mongo(self):
+        status = self.status
         data = {
             "user_moves": list(self.board.user_player.moves),
             "computer_moves": list(self.board.computer_player.moves),
-            "status": self.status,
+            "status": status,
         }
+        if not status == GameStatus.IN_PROGRESS:
+            data["completed_at"] = datetime.datetime.now()
         return data
 
     @property

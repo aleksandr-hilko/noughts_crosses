@@ -6,24 +6,24 @@ from app.game.constants import GameStatus
 
 class Player:
     def __init__(self, moves, is_computer):
-        self._moves = set(moves)
+        self.moves = moves
         self.is_computer = is_computer
 
     @property
-    def moves(self):
-        return self._moves
+    def raw_moves(self):
+        return {c["coords"] for c in self.moves}
 
     @property
     def max_points_in_seq(self):
         # TODO improve this method
-        moves_count = len(self._moves)
+        moves_count = len(self.raw_moves)
         g_max = moves_count if moves_count <= 1 else 0
-        if len(self._moves) >= 2:
-            max_x = max(m[0] for m in self._moves)
-            min_x = min(m[0] for m in self._moves)
-            max_y = max(m[1] for m in self._moves)
-            min_y = min(m[1] for m in self._moves)
-            for m in self._moves:
+        if len(self.raw_moves) >= 2:
+            max_x = max(m[0] for m in self.raw_moves)
+            min_x = min(m[0] for m in self.raw_moves)
+            max_y = max(m[1] for m in self.raw_moves)
+            min_y = min(m[1] for m in self.raw_moves)
+            for m in self.raw_moves:
                 hor_points = {(i, m[1]) for i in range(min_x, max_x + 1)}
                 vertical_points = {(m[0], i) for i in range(min_y, max_y + 1)}
                 diagonal_1_points = {
@@ -45,7 +45,7 @@ class Player:
                 for i in iterables:
                     l_max = 0
                     for point in i:
-                        if point in self._moves:
+                        if point in self.raw_moves:
                             l_max += 1
                         else:
                             l_max = 0
@@ -53,8 +53,13 @@ class Player:
                             g_max = l_max
         return g_max
 
-    def add_move(self, move):
-        self._moves.add(move)
+    def add_move(self, move, order):
+        self.moves.append(
+            {
+                "coords": move,
+                "order": order,
+            }
+        )
 
 
 class Board:
@@ -69,7 +74,11 @@ class Board:
 
     @property
     def free_cells(self):
-        return self.cells - self.user_player.moves - self.computer_player.moves
+        return self.cells - self.user_player.raw_moves - self.computer_player.raw_moves
+    
+    @property
+    def number_of_moves(self):
+        return len(self.user_player.moves) + len(self.computer_player.moves)
 
     def get_player(self, is_computer=False):
         return [
@@ -80,7 +89,7 @@ class Board:
 
     def add_move(self, move, computer=False):
         obj = self.get_player(is_computer=computer)
-        return obj.add_move(move)
+        return obj.add_move(move, order=self.number_of_moves + 1)
 
     def has_won(self, line_len_to_win, computer=False):
         obj = self.get_player(is_computer=computer)
@@ -106,8 +115,8 @@ class Game:
     def data_for_mongo(self):
         status = self.status
         data = {
-            "user_moves": list(self.board.user_player.moves),
-            "computer_moves": list(self.board.computer_player.moves),
+            "user_moves": self.board.user_player.moves,
+            "computer_moves": self.board.computer_player.moves,
             "status": status,
         }
         if not status == GameStatus.IN_PROGRESS:
@@ -127,7 +136,7 @@ class Game:
     @property
     def free_cells(self):
         return self.board.free_cells
-
+    
     def make_move(self, move, computer=False):
         self.board.add_move(move=move, computer=computer)
 

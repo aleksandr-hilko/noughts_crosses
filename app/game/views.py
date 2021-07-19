@@ -1,5 +1,6 @@
 import datetime
 import logging
+import random
 
 from bson.objectid import ObjectId
 
@@ -27,7 +28,8 @@ def start_game():
         return jsonify(err.messages), 400
     else:
         current_user = get_jwt_identity()
-        db.games.insert_one(
+        computer_first = random.choice([True, False])
+        game = db.games.insert_one(
             {
                 "user": current_user,
                 "board_size": request_data["board_size"],
@@ -36,10 +38,11 @@ def start_game():
                 "completed": False,
                 "line_len_to_win": request_data["line_len_to_win"],
                 "status": GameStatus.IN_PROGRESS,
-                "created_at": datetime.datetime.now()
+                "created_at": datetime.datetime.now(),
+                "computer_first": computer_first
             }
         )
-    return jsonify(message="Game has started"), 201
+    return jsonify(message="Game has started", game_id=str(_id.inserted_id)), 201
 
 
 @game.route("/", methods=["GET"])
@@ -67,28 +70,28 @@ def move(game_id):
         GameMoveSchema().load(request_data)
     except ValidationError as err:
         return jsonify(err.messages), 400
-    u_x, u_y = request_data["x"], request_data["y"]
+    u_coords = request_data["x"], request_data["y"]
     game = Game.from_mongo(mongo_game)
     free_cells = game.free_cells
 
-    if (u_x, u_y) not in free_cells:
+    if u_coords not in free_cells:
         return (
             jsonify(f"You can't move at this cell. Free board cells are: {free_cells}"),
             400,
         )
 
-    game.make_move((u_x, u_y), computer=False)
-    user_move, computer_move = (u_x, u_y), None
-
-    if game.has_won(computer=False) or not game.free_cells:
-        pass
-    else:
-        c_x, x_y = game.calculate_move()
-        game.make_move((c_x, x_y), computer=True)
-        computer_move = (c_x, x_y)
+    computer_first = mongo_game.get("computer_first", False)
+    moves_order = (True, False) if computer_first else (False, True)
+    c_coords = None
+    for computer_move in moves_order:
+        if computer_move:
+            coords = game.calculate_move()
+            c_coords = coords
+        else:
+            coords = u_coords
+        game.make_move(coords, computer=computer_move)
+        if game.has_won(computer=computer_move) or not game.free_cells:
+            break
     data = game.data_for_mongo
-    logger.error(f"!!!!! Data for mongo: {data}")
     db.games.find_one_and_update({"_id": ObjectId(game_id)}, {"$set": data})
-    return jsonify(
-        your_move=user_move, computer_move=computer_move, game_status=data["status"]
-    )
+    return jsonify(your_move=u_coords, computer_move=c_coords, game_status=data["status"])

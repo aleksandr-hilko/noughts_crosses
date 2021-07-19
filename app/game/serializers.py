@@ -17,12 +17,17 @@ class GameStartSchema(Schema):
             )
 
 
+class GameMoveSchema(Schema):
+    order = fields.Int()
+    coords = fields.Tuple((fields.Int, fields.Int))
+
+
 class GameSchema(Schema):
     _id = fields.String()
     user = fields.Str()
     board_size = fields.Int()
-    user_moves = fields.List(fields.Tuple((fields.Int, fields.Int)))
-    computer_moves = fields.List(fields.Tuple((fields.Int, fields.Int)))
+    user_moves = fields.Nested(GameMoveSchema, many=True)
+    computer_moves = fields.Nested(GameMoveSchema, many=True)
     line_len_to_win = fields.Int()
     status = fields.Str()
     created_at = fields.DateTime(missing=None, default=None)
